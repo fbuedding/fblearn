@@ -1,6 +1,6 @@
 pub trait ActivationF {
     fn f(&self, x: f64) -> f64;
-    fn f_derivative(x: f64) -> f64;
+    fn f_derivative(&self, x: f64) -> f64;
 }
 
 pub struct Relu;
@@ -9,7 +9,7 @@ impl ActivationF for Relu {
         return x.max(0.);
     }
 
-    fn f_derivative(x: f64) -> f64 {
+    fn f_derivative(&self, x: f64) -> f64 {
         if x > 0. {
             return 1.;
         }
@@ -22,7 +22,7 @@ impl ActivationF for Identity {
         return x;
     }
 
-    fn f_derivative(_: f64) -> f64 {
+    fn f_derivative(&self, _: f64) -> f64 {
         return 1.;
     }
 }

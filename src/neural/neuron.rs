@@ -21,7 +21,7 @@ impl fmt::Display for InputWeightLengthsMismatchError {
     }
 }
 impl Neuron {
-    pub fn activate<F>(&self, input: Vec<f64>, f: F) -> Result<f64, InputWeightLengthsMismatchError>
+    pub fn activate<F>(&self, input: &Vec<f64>, f: F) -> Result<f64, InputWeightLengthsMismatchError>
     where
         F: Fn(f64) -> f64,
     {
