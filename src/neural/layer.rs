@@ -1,14 +1,21 @@
-use std::{error::Error, fmt};
+use std::{error::Error, fmt::{self}};
 
 use crate::ActivationF;
 
 use super::neuron::{InputWeightLengthsMismatchError, Neuron};
-use rand::prelude::*;
 
 #[derive(Debug)]
 pub enum LayerError {
     NeuronActivationError(NeuronActivationError),
     InputOneOnOneError(InputOneOnOneError),
+}
+impl<'a> fmt::Display for LayerError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LayerError::NeuronActivationError(err) => fmt::Display::fmt(&err, f),
+            LayerError::InputOneOnOneError(err) => fmt::Display::fmt(&err, f),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -30,7 +37,7 @@ pub struct NeuronActivationError {
 
 impl<'a> fmt::Display for NeuronActivationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Error while activating neuron: {}", self.neuron_index)
+        write!(f, "Error while activating neuron: {}, source: {:?}", self.neuron_index, self.source)
     }
 }
 
@@ -48,20 +55,20 @@ pub enum Types {
     Fully,
 }
 
-pub struct Layer<'a> {
+pub struct Layer<'a, T> where T: ActivationF{
     neurons: Vec<Neuron>,
-    connection: Types,
+    layer_type: Types,
     num_inputs: usize,
-    f: &'a dyn ActivationF,
+    f: &'a T
 }
 
-impl<'a> Layer<'a> {
-    pub fn input(&self, xs: Vec<f64>) -> Result<Vec<f64>, LayerError> {
+impl<'a, T:ActivationF> Layer<'a, T> {
+    pub fn input(&self, xs: &Vec<f64>) -> Result<Vec<f64>, LayerError> {
         return self
             .neurons
             .iter()
             .enumerate()
-            .map(|(i, x)| match self.connection {
+            .map(|(i, x)| match self.layer_type {
                 Types::OneOnOne => {
                     if xs.len() != self.num_inputs {
                         return Err(LayerError::InputOneOnOneError(InputOneOnOneError {
@@ -90,28 +97,29 @@ impl<'a> Layer<'a> {
     }
 }
 
-pub fn new_layer(
+/// .
+pub fn new_layer <'a, T : ActivationF, F>(
     num_neuron: usize,
     num_inputs: usize,
-    connection: Types,
-    f: &dyn ActivationF,
-) -> Layer {
-    let mut rng = rand::thread_rng();
+    layer_type: Types,
+    activation_func: &'a T,
+    mut initializer: F
+) -> Layer <T> where F: FnMut() ->  f64{
 
     let neurons = (0..num_neuron)
         .map(|_| Neuron {
-            weights: match connection {
-                Types::OneOnOne => vec![rng.gen()],
-                Types::Fully => (0..num_inputs).map(|_| rng.gen()).collect(),
+            weights: match layer_type {
+                Types::OneOnOne => vec![initializer()],
+                Types::Fully => (0..num_neuron).map(|_| initializer()).collect(),
             },
-            bias: rng.gen(),
+            bias: initializer(),
         })
         .collect();
 
     return Layer {
         neurons,
         num_inputs,
-        connection,
-        f,
+        layer_type,
+        f: activation_func,
     };
 }
