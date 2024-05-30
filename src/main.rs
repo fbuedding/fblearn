@@ -1,18 +1,12 @@
-use rand::Rng;
+use std::error::Error;
 
-use crate::neural::activation_funcs::*;
-use crate::neural::layer::new_layer;
+use neural::{activation_funcs::SIGMOID, layer::Types::Fully, net::*};
 
 pub mod neural;
 
-fn main() {
-    let relu = Relu {};
-
-    let mut rng = rand::thread_rng();
-    let layer = new_layer(100, 1, neural::layer::Types::Fully, &relu, || rng.gen());
-    let out = layer.input(&vec![1.;100]);
-        match out {
-            Ok(v) => println!("{:?}", v),
-            Err(err) => eprintln!("{err}"),
-        }
+fn main() -> Result<(), Box<dyn Error>> {
+    let nn = FNN::new(2, Fully, SIGMOID).add_layer(1, Fully, SIGMOID)?;
+    println!("Parameter count: {}", nn.parameter_count());
+    println!("{:?}", nn.input(vec![1., 2.]));
+    Ok(())
 }

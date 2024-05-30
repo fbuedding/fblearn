@@ -9,15 +9,18 @@ pub struct Neuron {
 }
 #[derive(Debug)]
 pub struct InputWeightLengthsMismatchError {
-    inputs_lengt: usize,
-    weights_lenght: usize,
+    inputs_length: usize,
+    weights_length: usize,
+}
+
+impl InputWeightLengthsMismatchError {
 }
 
 impl Error for InputWeightLengthsMismatchError {}
 
 impl fmt::Display for InputWeightLengthsMismatchError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Inputs lengths and weights length is not the same, inputs lengts :{}, weights length: {}", self.inputs_lengt, self.weights_lenght)
+        write!(f, "Inputs lengths and weights length is not the same, inputs lengts :{}, weights length: {}", self.inputs_length, self.weights_length)
     }
 }
 impl Neuron {
@@ -31,8 +34,8 @@ impl Neuron {
     {
         if input.len() != self.weights.len() {
             return Err(InputWeightLengthsMismatchError {
-                inputs_lengt: input.len(),
-                weights_lenght: self.weights.len(),
+                inputs_length: input.len(),
+                weights_length: self.weights.len(),
             });
         }
         let mut sum = self.bias;
@@ -43,19 +46,22 @@ impl Neuron {
         let output = f(sum);
         return Ok(output);
     }
+    pub fn weights_length(&self) -> usize {
+        self.weights.len()
+    }
 }
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::{ActivationF, Identity};
+    use super::super::activation_funcs::IDENTITY;
     #[test]
     fn should_return_error() -> Result<(), String> {
         let n = Neuron {
             weights: vec![],
             bias: 1.,
         };
-        let r = n.activate(&vec![1.], |x| Identity.f(x));
+        let r = n.activate(&vec![1.], IDENTITY.0);
         match r {
             Ok(_) => Err(String::from(
                 "Should error with InputWeightLengthsMismatchError",
@@ -70,7 +76,7 @@ mod tests {
             weights: vec![],
             bias: 1.,
         };
-        let r = n.activate(&vec![], |x| Identity.f(x));
+        let r = n.activate(&vec![], IDENTITY.0);
         match r {
             Ok(_) => Ok(()),
             Err(err) => Err(err),
@@ -83,7 +89,7 @@ mod tests {
             weights: vec![],
             bias: 1.,
         };
-        let r = n.activate(&vec![], |x| Identity.f(x))?;
+        let r = n.activate(&vec![], IDENTITY.0)?;
         assert_eq!(r, 1.);
         Ok(())
     }
@@ -95,7 +101,7 @@ mod tests {
             weights: vec![1.; len],
             bias: 0.,
         };
-        let r = n.activate(&vec![1.; len], |x| Identity.f(x))?;
+        let r = n.activate(&vec![1.; len], IDENTITY.0)?;
         assert_eq!(r, 10.);
         Ok(())
     }

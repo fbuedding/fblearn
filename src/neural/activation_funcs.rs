@@ -1,31 +1,23 @@
-pub trait ActivationF {
-    fn f(&self, x: f64) -> f64;
-    fn f_derivative(&self, x: f64) -> f64;
-}
+use std::f32::consts::E;
 
-pub struct Relu;
-impl ActivationF for Relu {
-    fn f(&self, x: f64) -> f64 {
+pub type Func = fn(f64) -> f64;
+pub type ActivationFunc = (Func, Func);
+
+pub const IDENTITY: ActivationFunc = (|x: f64| x, |_: f64| 1.);
+pub const RELU: ActivationFunc = (
+    |x: f64| {
         return x.max(0.);
-    }
-
-    fn f_derivative(&self, x: f64) -> f64 {
+    },
+    |x: f64| {
         if x > 0. {
             return 1.;
         }
         return 0.;
-    }
-}
-pub struct Identity;
-impl ActivationF for Identity {
-    fn f(&self, x: f64) -> f64 {
-        return x;
-    }
+    },
+);
 
-    fn f_derivative(&self, _: f64) -> f64 {
-        return 1.;
-    }
-}
+const SIGMOID_GX: Func = |x| 1. / (1. + (E.powf(x as f32) as f64));
+pub const SIGMOID: ActivationFunc = (SIGMOID_GX, |x: f64| SIGMOID_GX(x)*(1. -SIGMOID_GX(x)));
 
 #[cfg(test)]
 mod tests {
@@ -33,34 +25,28 @@ mod tests {
     // Relu tests
     #[test]
     fn relu_gt_0() {
-        let relu = Relu;
-        assert_eq!(relu.f(1.), 1.);
+        assert_eq!(RELU.0(1.), 1.);
     }
     #[test]
     fn relu_eq_0() {
-        let relu = Relu;
-        assert_eq!(relu.f(0.), 0.);
+        assert_eq!(RELU.0(0.), 0.);
     }
     #[test]
     fn relu_lt_0() {
-        let relu = Relu;
-        assert_eq!(relu.f(-1.), 0.);
+        assert_eq!(RELU.0(-1.), 0.);
     }
 
     // Identity tests
     #[test]
     fn identity_gt_0() {
-        let identity = Identity;
-        assert_eq!(identity.f(1.), 1.);
+        assert_eq!(IDENTITY.0(1.), 1.);
     }
     #[test]
     fn identity_eq_0() {
-        let identity = Identity;
-        assert_eq!(identity.f(0.), 0.);
+        assert_eq!(IDENTITY.0(0.), 0.);
     }
     #[test]
     fn identity_lt_0() {
-        let identity = Identity;
-        assert_eq!(identity.f(-1.), -1.);
+        assert_eq!(IDENTITY.0(-1.), -1.);
     }
 }
